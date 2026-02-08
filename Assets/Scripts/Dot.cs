@@ -1,12 +1,17 @@
+using System.Collections;
 using UnityEngine;
 
 public class Dot : MonoBehaviour
 {
+    [Header("Board Variables")]
     public int column;
     public int row;
+    public int previousColumn;
+    public int previousRow;
     public int targetX;
     public int targetY;
     public bool isMatched = false;
+
     private Board board;
     private GameObject otherDot;
     private Vector2 firstTouchPosition;
@@ -21,6 +26,8 @@ public class Dot : MonoBehaviour
         targetY = (int)transform.position.y;
         row = targetY;
         column = targetX;
+        previousRow = row;
+        previousColumn = column;
     }
 
     void Update()
@@ -31,7 +38,7 @@ public class Dot : MonoBehaviour
         {
             SpriteRenderer mySprite = GetComponent<SpriteRenderer>();
             //mySprite.color = new Color(mySprite.color.r, mySprite.color.g, mySprite.color.b, 0.5f);
-            mySprite.color = new Color(1f, 1f, 1f, 0.2f);
+            mySprite.color = new Color(0f, 0f, 0f, 0.2f);
         }
 
         targetX = column;
@@ -66,6 +73,24 @@ public class Dot : MonoBehaviour
         }
     }
 
+    public IEnumerator CheckMoveCo()
+    {
+        yield return new WaitForSeconds(0.5f);
+
+        if (otherDot != null)
+        {
+            if (!isMatched && !otherDot.GetComponent<Dot>().isMatched)
+            {
+                otherDot.GetComponent<Dot>().row = row;
+                otherDot.GetComponent<Dot>().column = column;
+                row = previousRow;
+                column = previousColumn;
+            }
+
+            otherDot = null;
+        }
+    }
+
     private void OnMouseDown()
     {
         firstTouchPosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
@@ -85,14 +110,14 @@ public class Dot : MonoBehaviour
 
     void MovePieces()
     {
-        if (swipeAngle > -45 && swipeAngle <= 45 && column < board.width)
+        if (swipeAngle > -45 && swipeAngle <= 45 && column < board.width - 1)
         {
             // Right swipe
             otherDot = board.allDots[column + 1, row];
             otherDot.GetComponent<Dot>().column -= 1;
             column += 1;
         }
-        else if (swipeAngle > 45 && swipeAngle <= 135 && row < board.height)
+        else if (swipeAngle > 45 && swipeAngle <= 135 && row < board.height - 1)
         {
             // Up swipe
             otherDot = board.allDots[column, row + 1];
@@ -113,6 +138,8 @@ public class Dot : MonoBehaviour
             otherDot.GetComponent<Dot>().row += 1;
             row -= 1;
         }
+
+        StartCoroutine(CheckMoveCo());
     }
 
     void FindMatches()
